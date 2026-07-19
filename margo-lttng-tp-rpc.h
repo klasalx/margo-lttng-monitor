@@ -135,7 +135,7 @@ LTTNG_UST_TRACEPOINT_EVENT( //#TODO:
     margo_rpc,
     forward_begin,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle,
+        uint64_t, index,
         uint64_t, request,
         uint64_t, trace_id
         //uint16_t, provider_id,
@@ -143,7 +143,7 @@ LTTNG_UST_TRACEPOINT_EVENT( //#TODO:
         //uint64_t, data TODO:
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
+        lttng_ust_field_integer_hex(uint64_t, index, index)
         lttng_ust_field_integer_hex(uint64_t, request, request)
         lttng_ust_field_integer_hex(uint64_t, trace_id, trace_id)
         //lttng_ust_field_integer(uint16_t, provider_id, provider_id)
@@ -156,14 +156,14 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     forward_end,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle
-#ifdef MARGO_LTTNG_RET_TRACING 
+        uint64_t, index
+#ifdef MARGO_LTTNG_RET_TRACING
         ,int32_t, ret
 #endif
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
-#ifdef MARGO_LTTNG_RET_TRACING 
+        lttng_ust_field_integer_hex(uint64_t, index, index)
+#ifdef MARGO_LTTNG_RET_TRACING
         lttng_ust_field_integer(int32_t, ret, ret)
 #endif
     )
@@ -203,14 +203,14 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     respond_begin,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle,
+        uint64_t, index,
         uint64_t, request
         // uint32_t, timeout_ms,
         // uint8_t, error,
         // uint64_t, data
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
+        lttng_ust_field_integer_hex(uint64_t, index, index)
         lttng_ust_field_integer_hex(uint64_t, request, request)
         //lttng_ust_field_integer(uint32_t, timeout_ms, timeout_ms)
         //lttng_ust_field_integer(uint8_t, error, error)
@@ -222,14 +222,14 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     respond_end,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle
-#ifdef MARGO_LTTNG_RET_TRACING 
+        uint64_t, index
+#ifdef MARGO_LTTNG_RET_TRACING
         ,int32_t, ret
 #endif
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
-#ifdef MARGO_LTTNG_RET_TRACING 
+        lttng_ust_field_integer_hex(uint64_t, index, index)
+#ifdef MARGO_LTTNG_RET_TRACING
         lttng_ust_field_integer(int32_t, ret, ret)
 #endif
     )
@@ -297,13 +297,13 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     rpc_handler_begin,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle,
+        uint64_t, index,
         const char*, origin_addr,
         uint64_t, parent_rpc_id,
         uint64_t, parent_trace_id
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
+        lttng_ust_field_integer_hex(uint64_t, index, index)
         lttng_ust_field_string(origin_addr, origin_addr)
         lttng_ust_field_integer_hex(uint64_t, parent_rpc_id, parent_rpc_id)
         lttng_ust_field_integer_hex(uint64_t, parent_trace_id, parent_trace_id)
@@ -314,16 +314,16 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     rpc_handler_end,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle,
+        uint64_t, index,
         uint64_t, pool
-#ifdef MARGO_LTTNG_RET_TRACING 
+#ifdef MARGO_LTTNG_RET_TRACING
        , int32_t, ret
 #endif
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
+        lttng_ust_field_integer_hex(uint64_t, index, index)
         lttng_ust_field_integer_hex(uint64_t, pool, pool)
-#ifdef MARGO_LTTNG_RET_TRACING 
+#ifdef MARGO_LTTNG_RET_TRACING
         lttng_ust_field_integer(int32_t, ret, ret)
 #endif
     )
@@ -333,10 +333,10 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     rpc_ult_begin,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle
+        uint64_t, index
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
+        lttng_ust_field_integer_hex(uint64_t, index, index)
     )
 )
 
@@ -344,10 +344,10 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     rpc_ult_end,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle
+        uint64_t, index
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
+        lttng_ust_field_integer_hex(uint64_t, index, index)
     )
 )
 
@@ -419,12 +419,12 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     get_input_begin,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle,
+        uint64_t, index,
         uint64_t, data,
         uint64_t, parent_handle
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
+        lttng_ust_field_integer_hex(uint64_t, index, index)
         lttng_ust_field_integer_hex(uint64_t, data, data)
         lttng_ust_field_integer_hex(uint64_t, parent_handle, parent_handle)
     )
@@ -434,14 +434,14 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     get_input_end,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle
-#ifdef MARGO_LTTNG_RET_TRACING 
+        uint64_t, index
+#ifdef MARGO_LTTNG_RET_TRACING
         ,int32_t, ret
 #endif
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
-#ifdef MARGO_LTTNG_RET_TRACING 
+        lttng_ust_field_integer_hex(uint64_t, index, index)
+#ifdef MARGO_LTTNG_RET_TRACING
         lttng_ust_field_integer(int32_t, ret, ret)
 #endif
     )
@@ -451,11 +451,11 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     get_output_begin,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle,
+        uint64_t, index,
         uint64_t, data
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
+        lttng_ust_field_integer_hex(uint64_t, index, index)
         lttng_ust_field_integer_hex(uint64_t, data, data)
     )
 )
@@ -464,14 +464,14 @@ LTTNG_UST_TRACEPOINT_EVENT(
     margo_rpc,
     get_output_end,
     LTTNG_UST_TP_ARGS(
-        uint64_t, handle
-#ifdef MARGO_LTTNG_RET_TRACING 
+        uint64_t, index
+#ifdef MARGO_LTTNG_RET_TRACING
         ,int32_t, ret
 #endif
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, handle, handle)
-#ifdef MARGO_LTTNG_RET_TRACING 
+        lttng_ust_field_integer_hex(uint64_t, index, index)
+#ifdef MARGO_LTTNG_RET_TRACING
         lttng_ust_field_integer(int32_t, ret, ret)
 #endif
     )

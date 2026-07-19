@@ -87,27 +87,29 @@ __margo_lttng_monitor_on_lookup(void* uargs, double timestamp, margo_monitor_eve
     lttng_ust_tracepoint(margo_rpc, lookup_end, event_args->name, event_args->addr);
 }
 
-uint64_t global_index = 0;
+static _Atomic uint64_t global_index = 0;
 static void
 __margo_lttng_monitor_on_create(void*                       uargs,
                                   double                      timestamp,
                                   margo_monitor_event_t       event_type,
                                   margo_monitor_create_args_t event_args)
 {
-    uint64_t Index = -1;
+    uint64_t trace_id = -1;
     char AddrBuf[64] = { 0 };
     size_t BufSize = 64;
-    if(event_type == MARGO_MONITOR_FN_START) 
+    if(event_type == MARGO_MONITOR_FN_START)
     {
-        Index = ++global_index; // TODO: not thread safe!
-        event_args->uctx.i = Index;
-        lttng_ust_tracepoint(margo_rpc, create_begin, Index, event_args->id);
+        trace_id = ++global_index;
+        event_args->uctx.i = trace_id;
+        lttng_ust_tracepoint(margo_rpc, create_begin, trace_id, event_args->id);
         return;
     }
-    else Index = event_args->uctx.i;
+    else trace_id = event_args->uctx.i;
     const struct hg_info* handle_info = margo_get_info(event_args->handle);
     if(!handle_info) return;
-    lttng_ust_tracepoint(margo_rpc, create_end, Index, handle_info->addr, event_args->handle);
+    margo_monitor_data_t trace_data = {.i = (int64_t)trace_id};
+    margo_set_monitoring_data(event_args->handle, trace_data);
+    lttng_ust_tracepoint(margo_rpc, create_end, trace_id, handle_info->addr, event_args->handle);
 }
 
 #define RETRIEVE_SESSION(handle)                                            \
@@ -129,21 +131,29 @@ __margo_lttng_monitor_on_create(void*                       uargs,
         session = (bulk_session_t*)monitor_data.p;                       \
     } while (0)
 
+static uint64_t get_trace_id(hg_handle_t handle)
+{
+    margo_monitor_data_t monitor_data;
+    margo_get_monitoring_data(handle, &monitor_data);
+    return (uint64_t)monitor_data.i;
+}
+
 static void
 __margo_lttng_monitor_on_forward(void*                        uargs,
                                    double                       timestamp,
                                    margo_monitor_event_t        event_type,
                                    margo_monitor_forward_args_t event_args)
 {
-    if(event_type == MARGO_MONITOR_FN_START) 
+    uint64_t trace_id = get_trace_id(event_args->handle);
+    if(event_type == MARGO_MONITOR_FN_START)
     {
-        lttng_ust_tracepoint(margo_rpc, forward_begin, event_args->handle, event_args->request, event_args->trace_id);
+        lttng_ust_tracepoint(margo_rpc, forward_begin, trace_id, event_args->request, event_args->trace_id);
     }
     else
     {
-        lttng_ust_tracepoint(margo_rpc, forward_end, event_args->handle);
+        lttng_ust_tracepoint(margo_rpc, forward_end, trace_id);
     }
-        
+
 }
 
 static void
@@ -168,13 +178,14 @@ static void __margo_lttng_monitor_on_get_output(
     margo_monitor_event_t           event_type,
     margo_monitor_get_output_args_t event_args)
 {
-    if(event_type == MARGO_MONITOR_FN_START) 
+    uint64_t trace_id = get_trace_id(event_args->handle);
+    if(event_type == MARGO_MONITOR_FN_START)
     {
-        lttng_ust_tracepoint(margo_rpc, get_output_begin, event_args->handle, event_args->data);
+        lttng_ust_tracepoint(margo_rpc, get_output_begin, trace_id, event_args->data);
     }
     else
     {
-        lttng_ust_tracepoint(margo_rpc, get_output_end, event_args->handle);
+        lttng_ust_tracepoint(margo_rpc, get_output_end, trace_id);
     }
 }
 
@@ -184,13 +195,14 @@ __margo_lttng_monitor_on_get_input(void*                          uargs,
                                      margo_monitor_event_t          event_type,
                                      margo_monitor_get_input_args_t event_args)
 {
+    uint64_t trace_id = get_trace_id(event_args->handle);
     if(event_type == MARGO_MONITOR_FN_START)
     {
-        lttng_ust_tracepoint(margo_rpc, get_input_begin, event_args->handle, event_args->parent_handle, event_args->data);
+        lttng_ust_tracepoint(margo_rpc, get_input_begin, trace_id, event_args->parent_handle, event_args->data);
     }
     else
     {
-        lttng_ust_tracepoint(margo_rpc, get_input_end, event_args->handle);
+        lttng_ust_tracepoint(margo_rpc, get_input_end, trace_id);
     }
 }
 
@@ -209,13 +221,14 @@ __margo_lttng_monitor_on_respond(void*                        uargs,
                                    margo_monitor_event_t        event_type,
                                    margo_monitor_respond_args_t event_args)
 {
-    if(event_type == MARGO_MONITOR_FN_START) 
+    uint64_t trace_id = get_trace_id(event_args->handle);
+    if(event_type == MARGO_MONITOR_FN_START)
     {
-        lttng_ust_tracepoint(margo_rpc, respond_begin, event_args->handle, event_args->request);
+        lttng_ust_tracepoint(margo_rpc, respond_begin, trace_id, event_args->request);
     }
     else
     {
-        lttng_ust_tracepoint(margo_rpc, respond_end, event_args->handle);
+        lttng_ust_tracepoint(margo_rpc, respond_end, trace_id);
     }
 }
 
@@ -249,14 +262,20 @@ static void __margo_lttng_monitor_on_rpc_handler(
     if(handle_info) { HG_Addr_to_string(handle_info->hg_class, AddrBuf, &BufSize, handle_info->addr); }
 
     //lttng_ust_tracepoint(margo, rpc_handler_begin, event_args->parent_trace_id, event_args->handle, event_args->parent_rpc_id, AddrBuf, event_type);
-    
-    if(event_type == MARGO_MONITOR_FN_START) 
+
+    if(event_type == MARGO_MONITOR_FN_START)
     {
-        lttng_ust_tracepoint(margo_rpc, rpc_handler_begin, event_args->handle, AddrBuf, event_args->parent_rpc_id, event_args->parent_trace_id);
+        /* first time this (server-side) handle is seen: mint its own trace_id */
+        uint64_t trace_id = ++global_index;
+        margo_monitor_data_t trace_data = {.i = (int64_t)trace_id};
+        margo_set_monitoring_data(event_args->handle, trace_data);
+
+        lttng_ust_tracepoint(margo_rpc, rpc_handler_begin, trace_id, AddrBuf, event_args->parent_rpc_id, event_args->parent_trace_id);
     }
     else
     {
-        lttng_ust_tracepoint(margo_rpc, rpc_handler_end, event_args->handle, event_args->pool);
+        uint64_t trace_id = get_trace_id(event_args->handle);
+        lttng_ust_tracepoint(margo_rpc, rpc_handler_end, trace_id, event_args->pool);
     }
 }
 
@@ -266,13 +285,14 @@ __margo_lttng_monitor_on_rpc_ult(void*                        uargs,
                                    margo_monitor_event_t        event_type,
                                    margo_monitor_rpc_ult_args_t event_args)
 {
-    if(event_type == MARGO_MONITOR_FN_START) 
+    uint64_t trace_id = get_trace_id(event_args->handle);
+    if(event_type == MARGO_MONITOR_FN_START)
     {
-        lttng_ust_tracepoint(margo_rpc, rpc_ult_begin, event_args->handle);
+        lttng_ust_tracepoint(margo_rpc, rpc_ult_begin, trace_id);
     }
     else
     {
-        lttng_ust_tracepoint(margo_rpc, rpc_ult_end, event_args->handle);
+        lttng_ust_tracepoint(margo_rpc, rpc_ult_end, trace_id);
     }
 }
 
