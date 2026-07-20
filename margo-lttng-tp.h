@@ -56,7 +56,7 @@ LTTNG_UST_TRACEPOINT_EVENT_CLASS(
     ),
     LTTNG_UST_TP_FIELDS(
         lttng_ust_field_integer_hex(uint64_t, uuid, uid)
-        lttng_ust_field_integer_hex(uint64_t, trace_id, handle)
+        lttng_ust_field_integer_hex(uint64_t, trace_handle, handle)
         lttng_ust_field_integer_hex(uint64_t, local_rpc, rpc_id)
         lttng_ust_field_string(to_address,address)
         lttng_ust_field_integer(uint8_t, sep, sep)
@@ -100,7 +100,7 @@ LTTNG_UST_TRACEPOINT_EVENT_CLASS(
         uint8_t, sep
     ),
     LTTNG_UST_TP_FIELDS(
-        lttng_ust_field_integer_hex(uint64_t, trace_id, handle)
+        lttng_ust_field_integer_hex(uint64_t, trace_handle, handle)
         lttng_ust_field_integer(uint8_t, sep, sep)
     )
 )
